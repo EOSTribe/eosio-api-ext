@@ -93,7 +93,8 @@ async def get_balances(account, targetTokens):
         # placingn EOS token on first place
         for currency in balances:
             if currency['code'] == 'eosio.token':
-                temp[0] = currency
+                pass
+                # temp[0] = currency
             else:
                 temp.append()
 
