@@ -18,24 +18,41 @@ default_tokens_table = os.environ['DEFAULT_CONTRACT_TABLE']
 max_workers = int(os.environ['GET_UPSTREAM_BALANCES_WORKERS'])
 upstream = os.environ['UPSTREAM_API']
 
+# def get_tokens():
+#     global tokens
+#     # Request all tokens from the customtokens smart contract
+#     r = requests.post(upstream + '/v1/chain/get_table_rows', json={
+#         'code': default_tokens_code,
+#         'json': True,
+#         'limit': 1000,
+#         'scope': default_tokens_scope,
+#         'table': default_tokens_table
+#     })
+#     if r.status_code == 200:
+#         temp = []
+#         # Iterate over rows and build the tuple
+#         for token in r.json().get('rows'):
+#             symbol = token.get('customasset').split(' ')[1]
+#             temp.append((symbol, token.get('customtoken')))
+#         # Set the global cache
+#         tokens = temp
+
 def get_tokens():
     global tokens
-    # Request all tokens from the customtokens smart contract
-    r = requests.post(upstream + '/v1/chain/get_table_rows', json={
-        'code': default_tokens_code,
-        'json': True,
-        'limit': 1000,
-        'scope': default_tokens_scope,
-        'table': default_tokens_table
-    })
-    if r.status_code == 200:
-        temp = []
-        # Iterate over rows and build the tuple
-        for token in r.json().get('rows'):
-            symbol = token.get('customasset').split(' ')[1]
-            temp.append((symbol, token.get('customtoken')))
-        # Set the global cache
-        tokens = temp
+    temp = []
+    with open("all_tokens.json", "r") as read_file:
+        data = json.load(read_file)
+    for token in data:
+        if token['symbol'] == 'EOS' and token['account'] == 'eosio.token':
+            temp.append((token['symbol'], token['account']))
+        elif token['symbol'] == 'EOS':
+            pass
+        else:
+            temp.append((token['symbol'], token['account']))
+    tokens = temp
+
+
+
 
 async def get_balances(account, targetTokens):
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
