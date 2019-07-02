@@ -59,6 +59,8 @@ async def get_balances(account, targetTokens):
         loop = asyncio.get_event_loop()
         futures = []
         mapping = {}
+        temp = []
+
         # Create a future execution of the post request in the futures pool
         for (symbol, code) in targetTokens:
             mapping[symbol] = code
@@ -87,7 +89,15 @@ async def get_balances(account, targetTokens):
                         'code': mapping[symbol],
                         'symbol': symbol,
                     })
-            pass
+
+        # placingn EOS token on first place
+        for currency in balances:
+            if currency['code'] == 'eosio.token':
+                temp[0] = currency
+            else:
+                temp.append()
+        balances = temp
+
         # Return balances
         return balances
 
