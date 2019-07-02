@@ -96,7 +96,6 @@ async def get_balances(account, targetTokens):
                 temp[0] = currency
             else:
                 temp.append()
-        balances = temp
 
         # Return balances
         return balances
