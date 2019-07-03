@@ -1,5 +1,11 @@
 version: '3'
 services:
+  memcached:
+    image: memcached:1.4
+    container_name: memcached
+    networks:
+        - eosio_api_network
+    restart: on-failure
   get_accounts:
     build: ./services/get_accounts
     env_file:
@@ -45,6 +51,8 @@ services:
         - eosio_api_network
     ports:
         - "8901:8000"
+    links:
+        - memcached
     restart: on-failure
     volumes:
         - .:/src

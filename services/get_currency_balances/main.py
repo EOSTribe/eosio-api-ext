@@ -1,19 +1,27 @@
 import asyncio
 import concurrent.futures
 import json
+from pprint import pprint
+
 import requests
 import os
 import sys
 import falcon
+from pymemcache.client import base
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import partial
+
+mc = base.Client(('memcached', 11211))
 
 tokens = []
 
 # Load Environmental Variables
 
 max_workers = int(os.environ['GET_UPSTREAM_BALANCES_WORKERS'])
+
+cacheExpirationTime = int(os.environ['CACHE_EXPIRATION_TIME'])
+
 upstream = os.environ['UPSTREAM_API']
 
 def get_tokens():
@@ -67,6 +75,9 @@ async def get_balances(account, targetTokens):
                         'symbol': symbol,
                     })
 
+
+        #caching balances
+        mc.set(account, balances, cacheExpirationTime)
         # Return balances
         return balances
 
@@ -74,6 +85,7 @@ class GetCurrencyBalances:
     def on_post(self, req, resp):
         # Process the request to retrieve the account name
         request = json.loads(req.stream.read())
+        pprint(request)
         # Establish session for retrieval of all balances
         with requests.Session() as session:
             balances = []
@@ -85,9 +97,16 @@ class GetCurrencyBalances:
                 for token in request.get('tokens'):
                     contract, symbol = token.split(':')
                     targetTokens.append((symbol, contract))
-            # Launch async event loop to gather balances
-            loop = asyncio.get_event_loop()
-            balances = loop.run_until_complete(get_balances(request.get('account'), targetTokens))
+
+            account = request.get('account')
+            balances = mc.get(account)
+
+            if not balances:
+                # Launch async event loop to gather balances
+                loop = asyncio.get_event_loop()
+                balances = loop.run_until_complete(get_balances(account, targetTokens))
+            else:
+                balances = balances.decode('UTF-8')
             # Server the response
             resp.body = json.dumps(balances)
 
