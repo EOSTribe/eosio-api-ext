@@ -12,30 +12,9 @@ from functools import partial
 tokens = []
 
 # Load Environmental Variables
-default_tokens_code = os.environ['DEFAULT_CONTRACT_CODE']
-default_tokens_scope = os.environ['DEFAULT_CONTRACT_SCOPE']
-default_tokens_table = os.environ['DEFAULT_CONTRACT_TABLE']
+
 max_workers = int(os.environ['GET_UPSTREAM_BALANCES_WORKERS'])
 upstream = os.environ['UPSTREAM_API']
-
-# def get_tokens():
-#     global tokens
-#     # Request all tokens from the customtokens smart contract
-#     r = requests.post(upstream + '/v1/chain/get_table_rows', json={
-#         'code': default_tokens_code,
-#         'json': True,
-#         'limit': 1000,
-#         'scope': default_tokens_scope,
-#         'table': default_tokens_table
-#     })
-#     if r.status_code == 200:
-#         temp = []
-#         # Iterate over rows and build the tuple
-#         for token in r.json().get('rows'):
-#             symbol = token.get('customasset').split(' ')[1]
-#             temp.append((symbol, token.get('customtoken')))
-#         # Set the global cache
-#         tokens = temp
 
 def get_tokens():
     global tokens
@@ -59,8 +38,6 @@ async def get_balances(account, targetTokens):
         loop = asyncio.get_event_loop()
         futures = []
         mapping = {}
-        temp = []
-
         # Create a future execution of the post request in the futures pool
         for (symbol, code) in targetTokens:
             mapping[symbol] = code
@@ -89,14 +66,6 @@ async def get_balances(account, targetTokens):
                         'code': mapping[symbol],
                         'symbol': symbol,
                     })
-
-        # placingn EOS token on first place
-        for currency in balances:
-            if currency['code'] == 'eosio.token':
-                pass
-                # temp[0] = currency
-            else:
-                temp.append(currency)
 
         # Return balances
         return balances
