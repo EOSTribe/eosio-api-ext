@@ -85,7 +85,6 @@ class GetCurrencyBalances:
     def on_post(self, req, resp):
         # Process the request to retrieve the account name
         request = json.loads(req.stream.read())
-        pprint(request)
         # Establish session for retrieval of all balances
         with requests.Session() as session:
             balances = []
@@ -105,10 +104,15 @@ class GetCurrencyBalances:
                 # Launch async event loop to gather balances
                 loop = asyncio.get_event_loop()
                 balances = loop.run_until_complete(get_balances(account, targetTokens))
+
+                resp.body = json.dumps(balances)
             else:
-                balances = balances.decode('UTF-8')
+                balances = balances.decode('UTF-8').replace("\'", "\"")[1:-1]
+                resp.body = balances
+
+
             # Server the response
-            resp.body = json.dumps(balances)
+
 
 # Load the initial tokens on startup
 get_tokens()
