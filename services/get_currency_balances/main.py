@@ -107,7 +107,7 @@ class GetCurrencyBalances:
 
                 resp.body = json.dumps(balances)
             else:
-                balances = balances.decode('UTF-8').replace("\'", "\"")[1:-1]
+                balances = "["+balances.decode('UTF-8').replace("\'", "\"")[1:-1]+"]"
                 resp.body = balances
 
 
