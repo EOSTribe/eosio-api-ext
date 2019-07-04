@@ -8,9 +8,11 @@ services:
     restart: on-failure
   get_accounts:
     build: ./services/get_accounts
-    env_file:
-        - ./config/.env
-        - ./config/get_accounts/.env
+    environment:
+        - GET_ACCOUNTS_WORKERS=4
+        - GET_ACCOUNTS_UPSTREAM_WORKERS=4
+        - GET_ACCOUNTS_LIMIT=20
+        - UPSTREAM_API=https://api.eostribe.io
     networks:
         - eosio_api_network
     ports:
@@ -18,23 +20,13 @@ services:
     restart: on-failure
     volumes:
         - .:/src
-  get_actions:
-    build: ./services/get_actions
-    env_file:
-        - ./config/.env
-        - ./config/get_actions/.env
-    networks:
-        - eosio_api_network
-    ports:
-        - "8904:8000"
-    restart: on-failure
-    volumes:
-        - .:/src
   get_blocks:
     build: ./services/get_blocks
-    env_file:
-        - ./config/.env
-        - ./config/get_blocks/.env
+    environment:
+       - GET_BLOCKS_WORKERS=4
+       - GET_BLOCKS_UPSTREAM_WORKERS=4
+       - GET_BLOCKS_LIMIT=20
+       - UPSTREAM_API=https://api.eostribe.io
     networks:
         - eosio_api_network
     ports:
@@ -44,9 +36,11 @@ services:
         - .:/src
   get_currency_balances:
     build: ./services/get_currency_balances
-    env_file:
-        - ./config/.env
-        - ./config/get_currency_balances/.env
+    environment:
+        - CACHE_EXPIRATION_TIME=60
+        - GET_CURRENCY_BALANCES_WORKERS=4
+        - GET_UPSTREAM_BALANCES_WORKERS=100
+        - UPSTREAM_API=https://api.eostribe.io
     networks:
         - eosio_api_network
     ports:
@@ -56,7 +50,6 @@ services:
     restart: on-failure
     volumes:
         - .:/src
-
 networks:
     eosio_api_network:
         external: true
