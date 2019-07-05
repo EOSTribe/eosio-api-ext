@@ -12,8 +12,22 @@ from pymemcache.client import base
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import partial
 
-mc = base.Client(('memcached', 11211))
 
+def json_serializer(key, value):
+    if type(value) == str:
+       return value, 1
+    return json.dumps(value), 2
+
+def json_deserializer(key, value, flags):
+    if flags == 1:
+        return value.decode('utf-8')
+    if flags == 2:
+        return json.loads(value.decode('utf-8'))
+    raise Exception("Unknown serialization format")
+
+
+mc = base.Client(('memcached', 11211), serializer=json_serializer,
+deserializer=json_deserializer)
 tokens = []
 
 # Load Environmental Variables
@@ -104,14 +118,8 @@ class GetCurrencyBalances:
                 # Launch async event loop to gather balances
                 loop = asyncio.get_event_loop()
                 balances = loop.run_until_complete(get_balances(account, targetTokens))
-
-                resp.body = json.dumps(balances)
-            else:
-                balances = "["+balances.decode('UTF-8').replace("\'", "\"")[1:-1]+"]"
-                resp.body = balances
-
-
             # Server the response
+            resp.body = json.dumps(balances)
 
 
 # Load the initial tokens on startup
@@ -119,7 +127,7 @@ get_tokens()
 
 # Schedule tokens to be refreshed from smart contract every minute
 scheduler = BackgroundScheduler()
-scheduler.add_job(get_tokens, 'interval', minutes=1, id='get_tokens')
+scheduler.add_job(get_tokens, 'interval', minutes=10, id='get_tokens')
 scheduler.start()
 
 # Launch falcon API

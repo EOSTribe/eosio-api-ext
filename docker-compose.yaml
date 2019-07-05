@@ -37,8 +37,8 @@ services:
   get_currency_balances:
     build: ./services/get_currency_balances
     environment:
-        - CACHE_EXPIRATION_TIME=60
-        - GET_CURRENCY_BALANCES_WORKERS=4
+        - CACHE_EXPIRATION_TIME=600
+        - GET_CURRENCY_BALANCES_WORKERS=40
         - GET_UPSTREAM_BALANCES_WORKERS=100
         - UPSTREAM_API=https://api.eostribe.io
     networks:
