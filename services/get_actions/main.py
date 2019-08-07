@@ -24,7 +24,7 @@ class GetActions:
             "pos": position,
             "offset": offset
         })
-        jsonResponse = json.loads(r.json())
+        jsonResponse = json.loads(r.text)
         actions = jsonResponse['actions']
         actionsTransfer = []
         for action in actions:
