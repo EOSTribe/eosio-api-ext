@@ -1,41 +1,42 @@
 import asyncio
 import concurrent.futures
 import json
+from pprint import pprint
+
 import requests
 import os
 import sys
 import falcon
+from pymemcache.client import base
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import partial
 
+
+def json_serializer(key, value):
+    if type(value) == str:
+       return value, 1
+    return json.dumps(value), 2
+
+def json_deserializer(key, value, flags):
+    if flags == 1:
+        return value.decode('utf-8')
+    if flags == 2:
+        return json.loads(value.decode('utf-8'))
+    raise Exception("Unknown serialization format")
+
+
+mc = base.Client(('memcached', 11211), serializer=json_serializer,
+deserializer=json_deserializer)
 tokens = []
 
 # Load Environmental Variables
-default_tokens_code = os.environ['DEFAULT_CONTRACT_CODE']
-default_tokens_scope = os.environ['DEFAULT_CONTRACT_SCOPE']
-default_tokens_table = os.environ['DEFAULT_CONTRACT_TABLE']
-max_workers = int(os.environ['GET_UPSTREAM_BALANCES_WORKERS'])
-upstream = os.environ['UPSTREAM_API']
 
-# def get_tokens():
-#     global tokens
-#     # Request all tokens from the customtokens smart contract
-#     r = requests.post(upstream + '/v1/chain/get_table_rows', json={
-#         'code': default_tokens_code,
-#         'json': True,
-#         'limit': 1000,
-#         'scope': default_tokens_scope,
-#         'table': default_tokens_table
-#     })
-#     if r.status_code == 200:
-#         temp = []
-#         # Iterate over rows and build the tuple
-#         for token in r.json().get('rows'):
-#             symbol = token.get('customasset').split(' ')[1]
-#             temp.append((symbol, token.get('customtoken')))
-#         # Set the global cache
-#         tokens = temp
+max_workers = int(os.environ['GET_UPSTREAM_BALANCES_WORKERS'])
+
+cacheExpirationTime = int(os.environ['CACHE_EXPIRATION_TIME'])
+
+upstream = os.environ['UPSTREAM_API']
 
 def get_tokens():
     global tokens
@@ -59,8 +60,6 @@ async def get_balances(account, targetTokens):
         loop = asyncio.get_event_loop()
         futures = []
         mapping = {}
-        temp = []
-
         # Create a future execution of the post request in the futures pool
         for (symbol, code) in targetTokens:
             mapping[symbol] = code
@@ -90,14 +89,9 @@ async def get_balances(account, targetTokens):
                         'symbol': symbol,
                     })
 
-        # placingn EOS token on first place
-        for currency in balances:
-            if currency['code'] == 'eosio.token':
-                pass
-                # temp[0] = currency
-            else:
-                temp.append(currency)
 
+        #caching balances
+        mc.set(account, balances, cacheExpirationTime)
         # Return balances
         return balances
 
@@ -116,18 +110,24 @@ class GetCurrencyBalances:
                 for token in request.get('tokens'):
                     contract, symbol = token.split(':')
                     targetTokens.append((symbol, contract))
-            # Launch async event loop to gather balances
-            loop = asyncio.get_event_loop()
-            balances = loop.run_until_complete(get_balances(request.get('account'), targetTokens))
+
+            account = request.get('account')
+            balances = mc.get(account)
+
+            if not balances:
+                # Launch async event loop to gather balances
+                loop = asyncio.get_event_loop()
+                balances = loop.run_until_complete(get_balances(account, targetTokens))
             # Server the response
             resp.body = json.dumps(balances)
+
 
 # Load the initial tokens on startup
 get_tokens()
 
 # Schedule tokens to be refreshed from smart contract every minute
 scheduler = BackgroundScheduler()
-scheduler.add_job(get_tokens, 'interval', minutes=1, id='get_tokens')
+scheduler.add_job(get_tokens, 'interval', minutes=10, id='get_tokens')
 scheduler.start()
 
 # Launch falcon API

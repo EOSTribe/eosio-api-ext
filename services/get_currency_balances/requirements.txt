@@ -2,3 +2,5 @@ apscheduler==3.5.3
 falcon==1.4.1
 gunicorn==19.9.0
 requests==2.20.0
+pymemcache==2.1.1
+
