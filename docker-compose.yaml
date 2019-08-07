@@ -16,6 +16,17 @@ services:
     networks:
         - eosio_api_network
     ports:
+        - "8905:8000"
+    restart: on-failure
+    volumes:
+        - .:/src
+  get_actions:
+    build: ./services/get_actions
+    environment:
+        - GET_ACTIONS_WORKERS=4
+    networks:
+        - eosio_api_network
+    ports:
         - "8902:8000"
     restart: on-failure
     volumes:
