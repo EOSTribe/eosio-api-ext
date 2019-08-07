@@ -24,7 +24,7 @@ class GetActions:
             "pos": position,
             "offset": offset
         })
-        jsonResponse = json.loads(r.text)
+        jsonResponse = json.loads(r.json())
         actions = jsonResponse['actions']
         actionsTransfer = []
         for action in actions:
@@ -33,7 +33,7 @@ class GetActions:
 
         response = {"actions": actionsTransfer}
         # Return response
-        resp.body = json.dumps(response)
+        resp.body = json.dumps(response,ensure_ascii=False)
 
 # Launch falcon API
 app = falcon.API()
