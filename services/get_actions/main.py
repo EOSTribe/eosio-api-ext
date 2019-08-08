@@ -30,9 +30,8 @@ class GetActions:
         for action in actions:
             if action['action_trace']['act']['name'] == "transfer":
                 temp = {}
-                temp['action'] = {}
-                temp['action']['act'] = {}
-                temp['action']['act']['data'] = action['action_trace']['act']['data']
+                temp['act'] = {}
+                temp['act']['data'] = action['action_trace']['act']['data']
                 actionsTransfer.append(temp)
 
 
