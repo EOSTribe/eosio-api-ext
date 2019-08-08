@@ -29,7 +29,12 @@ class GetActions:
         actionsTransfer = []
         for action in actions:
             if action['action_trace']['act']['name'] == "transfer":
-                actionsTransfer.append(action)
+                temp = {}
+                temp['action'] = {}
+                temp['action']['act'] = {}
+                temp['action']['act']['data'] = action['action_trace']['act']['data']
+                actionsTransfer.append(temp)
+
 
         response = {"actions": actionsTransfer}
         # Return response
