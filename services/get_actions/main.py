@@ -9,7 +9,7 @@ full_api = os.environ.get('GET_ACTIONS_ENDPOINT', "https://eos.greymass.com")
 class GetActions:
     def on_post(self, req, resp):
         position = -1
-        offset = -500
+        offset = -200
         request = json.loads(req.stream.read())
         # Retrieve Variables
         account_name = request.get('account_name')
