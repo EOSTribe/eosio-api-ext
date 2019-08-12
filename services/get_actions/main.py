@@ -32,6 +32,7 @@ class GetActions:
                 temp = {}
                 temp['act'] = {}
                 temp['act']['data'] = action['action_trace']['act']['data']
+                temp['block_time'] = action['block_time']
                 actionsTransfer.append(temp)
 
 
